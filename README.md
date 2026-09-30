@@ -53,7 +53,6 @@ API: http://localhost:3000
 ```bash
 curl "http://localhost:3000/api/hotels?city=delhi"
 curl "http://localhost:3000/api/hotels?city=delhi&minPrice=5000&maxPrice=6000"
-curl "http://localhost:3000/api/hotels?city=jaipur"
 curl "http://localhost:3000/health"
 ```
 

@@ -1,0 +1,66 @@
+services:
+  api:
+    build: .
+    container_name: hotel-api
+    environment:
+      PORT: 3000
+      REDIS_URL: redis://redis:6379
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: default
+      TEMPORAL_TASK_QUEUE: hotel-offer-queue
+      SUPPLIER_A_URL: http://api:3000/supplierA/hotels
+      SUPPLIER_B_URL: http://api:3000/supplierB/hotels
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+      - temporal
+
+  worker:
+    build: .
+    container_name: hotel-worker
+    command: ["node", "dist/worker.js"]
+    environment:
+      REDIS_URL: redis://redis:6379
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: default
+      TEMPORAL_TASK_QUEUE: hotel-offer-queue
+      SUPPLIER_A_URL: http://api:3000/supplierA/hotels
+      SUPPLIER_B_URL: http://api:3000/supplierB/hotels
+    depends_on:
+      - api
+      - redis
+      - temporal
+
+  redis:
+    image: redis:7-alpine
+    container_name: hotel-redis
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: temporal-postgres
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_DB: temporal
+    volumes:
+      - temporal_pg:/var/lib/postgresql/data
+
+  temporal:
+    image: temporalio/auto-setup:1.28.2
+    container_name: hotel-temporal
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: temporal
+      POSTGRES_SEEDS: postgres
+    ports:
+      - "7233:7233"
+    depends_on:
+      - postgres
+
+volumes:
+  temporal_pg:
